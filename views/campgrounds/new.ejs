@@ -3,33 +3,38 @@
   <div class="row">
     <h1 class="text-center">New Campground</h1>
     <div class="col-5 offset-3">
-      <form action="/campgrounds" method="post">
+      <form class="validation" action="/campgrounds" method="post" novalidate>
         <div class="mb-3">
           <label class="form-label" for="title">Title</label>
-          <input class="form-control" id="title" type="text" name="title">
+          <input class="form-control" id="title" required type="text" name="campground[title]">
+          <div class="valid-feedback">Looks Good</div>
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="location">Location</label>
-          <input class="form-control" id="location" type="text" name="location">
+          <input class="form-control" id="location" type="text" name="campground[location]" required>
+          <div class="valid-feedback">Looks Good</div>
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="img">Image URL</label>
-          <input class="form-control" id="img" type="text" name="img">
+          <input class="form-control" id="img" type="text" name="campground[img]"required >
+          <div class="valid-feedback">Looks Good</div>
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="price">Price</label>
           <div class="input-group">
             <span class="input-group-text" id="price-label">$</span>
-            <input id="price" type="text" class="form-control" placeholder="0.00" aria-label="price" aria-describedby="price-label" name="price">
+            <input id="price" type="text" class="form-control" placeholder="0.00" required aria-label="1price" aria-describedby="price-label" name="campground[price]">
+            <div class="valid-feedback">Looks Good</div>
           </div>
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="description">Description</label>
-          <textarea class="form-control" id="description" type="text" name="description"></textarea>
+          <textarea class="form-control" id="description" type="text" required name="campground[escription]"></textarea>
+          <div class="valid-feedback">Looks Good</div>
         </div>
 
         <div class="mb-3">

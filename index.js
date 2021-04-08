@@ -5,6 +5,10 @@ const mongoose = require('mongoose');
 const Campground = require('./models/campground');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
+const AppError = require('./helpers/AppError');
+const catchAsync = require('./helpers/catchAsync');
+// const Joi = require('joi'); we dont need it anymore cuz importing campgroundSchema
+const campgroundSchema = require('./schemas.js');
 
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {useNewUrlParser: true, useUnifiedTopology: true})
@@ -16,62 +20,94 @@ mongoose.connect('mongodb://localhost:27017/yelp-camp', {useNewUrlParser: true, 
   console.log(err);
 })
 
+// ----------------middleawares-------------------
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
 app.engine('ejs', ejsMate);
+
+const validateCampground = (req, res, next) => {
+  // this will validtae data before we try to save it on mongodb
+  // the campgroundSchemam is on the file schema.js
+  const {error} = campgroundSchema.validate(req.body);
+  if(error) {
+    const msg = error.details.map(el => el.message).join(',');
+    throw new AppError(msg, 400)
+  } else {
+    next();
+  }
+}
+
 // --------------------routers---------------------------
 app.get('/', (req, res) => {
   res.render('home');
 })
 
-app.get('/campgrounds', async (req, res) => {
+// show all camps
+app.get('/campgrounds', catchAsync(async (req, res) => {
   const campgrounds = await Campground.find({});
   res.render('campgrounds/index', {campgrounds});
-});
+}));
 
+// create new camp
 app.get('/campgrounds/new',(req, res) => {
   res.render('campgrounds/new');
 });
 
-app.post('/campgrounds', async(req, res) => {
-  console.log(req.body);
-  const campground = new Campground(req.body);
-  await campground.save().then((data) => {
-    console.log('Data saved');
-    console.log(data);
-  })
-  res.redirect('/campgrounds/');
-});
+app.post('/campgrounds', validateCampground, catchAsync(async(req, res, next) => {
+  // console.log(req.body);
+  // console.log(req.body.campground);
+    // if(!req.body.campground)  throw new AppError('Invalid Data', 400);
+    const campground = new Campground(req.body.campground);
+    await campground.save()
+    res.redirect(`/campgrounds/${campground._id}`);
+  }));
 
-app.get('/campgrounds/:id', async (req, res) => {
+// show specific camp
+app.get('/campgrounds/:id', catchAsync(async (req, res) => {
   const {id} = req.params;
   const campground = await Campground.findById(id);
   res.render('campgrounds/show', {campground});
-});
+}));
 
-app.get('/campgrounds/:id/edit', async (req, res) => {
+// update camp
+app.get('/campgrounds/:id/edit', catchAsync(async (req, res) => {
   const {id} = req.params;
   const campground = await Campground.findById(id);
   res.render('campgrounds/edit', {campground});
-});
+}));
 
-app.put('/campgrounds/:id', async(req, res) => {
+app.put('/campgrounds/:id', validateCampground, catchAsync(async(req, res) => {
   const {id} = req.params;
-  const {title, location, description, img} = req.body;
-  const campground = await Campground.findByIdAndUpdate(id, {title, location, description, img}, {new: true, useFindAndModify: false});
-  console.log(campground);
+  const {title, location, description, img, price} = req.body.campground;
+  const campground = await Campground.findByIdAndUpdate(id, {title, location, price, description, img}, {new: true, useFindAndModify: false});
   res.redirect(`/campgrounds/${id}`);
-})
+}));
 
-app.delete('/campgrounds/:id', async(req, res) => {
+// delete camp
+app.delete('/campgrounds/:id', catchAsync(async(req, res) => {
   const {id} = req.params;
   await Campground.findByIdAndDelete(id);
   res.redirect(`/campgrounds`);
-})
+}));
 
+// if we tried to request some url that we dont recognize
+app.all('*', (req, res, next) => {
+  // res.send('404');
+  next(new AppError('Page Not Found', 404));
+});
+
+// handling errors
+app.use((err, req, res, next) => {
+  const {statusCode = 500} = err
+  // we must pass tehe error cus the message wont work
+
+  if(!err.message) err.message = "Ohh no, something went wrong"
+  res.status(statusCode).render('error', {err});
+  // res.send('ohh boys, something went wrong');
+});
 
 app.listen(3000, () => {
   console.log('Listening in port 3000');
-})
+});
