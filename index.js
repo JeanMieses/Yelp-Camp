@@ -4,6 +4,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Campground = require('./models/campground');
 const methodOverride = require('method-override');
+const ejsMate = require('ejs-mate');
 
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {useNewUrlParser: true, useUnifiedTopology: true})
@@ -19,6 +20,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
+app.engine('ejs', ejsMate);
 // --------------------routers---------------------------
 app.get('/', (req, res) => {
   res.render('home');
@@ -40,7 +42,7 @@ app.post('/campgrounds', async(req, res) => {
     console.log('Data saved');
     console.log(data);
   })
-  res.redirect('/campgrounds');
+  res.redirect('/campgrounds/');
 });
 
 app.get('/campgrounds/:id', async (req, res) => {
@@ -57,8 +59,9 @@ app.get('/campgrounds/:id/edit', async (req, res) => {
 
 app.put('/campgrounds/:id', async(req, res) => {
   const {id} = req.params;
-  const {title, location} = req.body;
-  const campground = await Campground.findByIdAndUpdate(id, {title, location, new: true,});
+  const {title, location, description, img} = req.body;
+  const campground = await Campground.findByIdAndUpdate(id, {title, location, description, img}, {new: true, useFindAndModify: false});
+  console.log(campground);
   res.redirect(`/campgrounds/${id}`);
 })
 
