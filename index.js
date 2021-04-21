@@ -6,10 +6,11 @@ const Campground = require('./models/campground');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
 const AppError = require('./helpers/AppError');
-const catchAsync = require('./helpers/catchAsync');
 // const Joi = require('joi'); we dont need it anymore cuz importing campgroundSchema
-const {campgroundSchema, reviewSchema} = require('./schemas.js');
-const Review = require('./models/review')
+const campgrounds= require('./routes/campgrounds');
+const reviews = require('./routes/reviews');
+const session = require('express-session');
+const flash = require('connect-flash');
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {useNewUrlParser: true, useUnifiedTopology: true})
 .then(() => {
@@ -26,99 +27,36 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
 app.engine('ejs', ejsMate);
-
-const validateCampground = (req, res, next) => {
-  // this will validtae data before we try to save it on mongodb
-  // the campgroundSchemam is on the file schema.js
-  const {error} = campgroundSchema.validate(req.body);
-  if(error) {
-    const msg = error.details.map(el => el.message).join(',');
-    throw new AppError(msg, 400)
-  } else {
-    next();
+app.use(express.static(path.join(__dirname, 'public')));
+const sessionConfig = {
+  secret: 'secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    httpOnly: true,
+    expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
+    maxAge: 1000 * 60 * 60 * 24 * 7
   }
-}
+};
+app.use(session(sessionConfig));
+app.use(flash());
 
-const validateReview = (req, res, next) => {
-    const { error } = reviewSchema.validate(req.body);
-    if (error) {
-        const msg = error.details.map(el => el.message).join(',')
-        throw new AppError(msg, 400)
-    } else {
-        next();
-    }
-}
+// flash msg handler
+// well have access it to automatically in our temple
+app.use((req, res, next) => {
+  res.locals.success = req.flash('success');
+  res.locals.error = req.flash('error');
+  next();
+})
 // --------------------routers---------------------------
 app.get('/', (req, res) => {
   res.render('home');
 })
 
-// show all camps
-app.get('/campgrounds', catchAsync(async (req, res) => {
-  const campgrounds = await Campground.find({});
-  res.render('campgrounds/index', {campgrounds});
-}));
 
-// create new camp
-app.get('/campgrounds/new',(req, res) => {
-  res.render('campgrounds/new');
-});
+app.use('/campgrounds', campgrounds);
+app.use('/campgrounds/:id/reviews', reviews);
 
-app.post('/campgrounds', validateCampground, catchAsync(async(req, res, next) => {
-  // console.log(req.body);
-  // console.log(req.body.campground);
-    // if(!req.body.campground)  throw new AppError('Invalid Data', 400);
-    const campground = new Campground(req.body.campground);
-    await campground.save()
-    res.redirect(`/campgrounds/${campground._id}`);
-  }));
-
-// show specific camp
-app.get('/campgrounds/:id', catchAsync(async (req, res) => {
-  const {id} = req.params;
-  const campground = await Campground.findById(id).populate('reviews');
-  res.render('campgrounds/show', {campground});
-}));
-
-// update camp
-app.get('/campgrounds/:id/edit', catchAsync(async (req, res) => {
-  const {id} = req.params;
-  const campground = await Campground.findById(id);
-  res.render('campgrounds/edit', {campground});
-}));
-
-app.put('/campgrounds/:id', validateCampground, catchAsync(async(req, res) => {
-  const {id} = req.params;
-  const {title, location, description, img, price} = req.body.campground;
-  const campground = await Campground.findByIdAndUpdate(id, {title, location, price, description, img}, {new: true, useFindAndModify: false});
-  res.redirect(`/campgrounds/${id}`);
-}));
-
-// delete camp
-app.delete('/campgrounds/:id', catchAsync(async(req, res) => {
-  const {id} = req.params;
-  await Campground.findByIdAndDelete(id);
-  res.redirect(`/campgrounds`);
-}));
-
-// review
-app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async(req, res) => {
-  const {id} = req.params
-  const campground = await Campground.findById(id);
-  const review = new Review(req.body.review);
-  campground.reviews.push(review)
-  await review.save();
-  await campground.save();
-  res.redirect(`/campgrounds/${id}`);
-}))
-
-// DELETE review/comment
-app.delete('/campgrounds/:id/reviews/:reviewId', catchAsync( async(req, res) => {
-  const {id, reviewId} = req.params;
-  await Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId}})
-  await Review.findByIdAndDelete(reviewId);
-  res.redirect(`/campgrounds/${id}`);
-}))
 
 // if we tried to request some url that we dont recognize
 app.all('*', (req, res, next) => {
