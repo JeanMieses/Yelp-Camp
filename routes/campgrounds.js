@@ -5,6 +5,7 @@ const AppError = require('../helpers/AppError');
 const Campground = require('../models/campground');
 const Review = require('../models/review');
 const {campgroundSchema, reviewSchema} = require('../schemas.js');
+const isLoggedIn = require('../middleware.js');
 
 const validateCampground = (req, res, next) => {
   // this will validtae data before we try to save it on mongodb
@@ -24,11 +25,11 @@ router.get('/', catchAsync(async (req, res) => {
 }));
 
 // create new camp
-router.get('/new',(req, res) => {
+router.get('/new', isLoggedIn, (req, res) => {
   res.render('campgrounds/new');
 });
 
-router.post('/', validateCampground, catchAsync(async(req, res, next) => {
+router.post('/', validateCampground, isLoggedIn, catchAsync(async(req, res, next) => {
   // console.log(req.body);
   // console.log(req.body.campground);
     // if(!req.body.campground)  throw new AppError('Invalid Data', 400);
@@ -50,7 +51,7 @@ router.get('/:id', catchAsync(async (req, res) => {
 }));
 
 // update camp
-router.get('/:id/edit', catchAsync(async (req, res) => {
+router.get('/:id/edit', isLoggedIn, catchAsync(async (req, res) => {
   const {id} = req.params;
   const campground = await Campground.findById(id);
   if(!campground) {

@@ -2,15 +2,21 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const mongoose = require('mongoose');
-const Campground = require('./models/campground');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
 const AppError = require('./helpers/AppError');
 // const Joi = require('joi'); we dont need it anymore cuz importing campgroundSchema
-const campgrounds= require('./routes/campgrounds');
-const reviews = require('./routes/reviews');
+
+const campgroundRoutes = require('./routes/campgrounds');
+const usersRoutes = require('./routes/user');
+const reviewRoutes = require('./routes/reviews');
+
 const session = require('express-session');
 const flash = require('connect-flash');
+const passport = require('passport');
+const localStrategy = require('passport-local');
+
+const User = require('./models/user');
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {useNewUrlParser: true, useUnifiedTopology: true})
 .then(() => {
@@ -21,7 +27,7 @@ mongoose.connect('mongodb://localhost:27017/yelp-camp', {useNewUrlParser: true, 
   console.log(err);
 })
 
-// ----------------middleawares-------------------
+// ----------------middleawares and configurations-------------------
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({extended: true}));
@@ -40,23 +46,41 @@ const sessionConfig = {
 };
 app.use(session(sessionConfig));
 app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
 
 // flash msg handler
 // well have access it to automatically in our temple
 app.use((req, res, next) => {
+  res.locals.currentUser = req.user;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   next();
 })
+// ----------------------passport stuff----------------------------------------
+
+passport.use(new localStrategy(User.authenticate()));
+// how to stored and un-stored users in a session
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+
+app.get('/fakeUser', async (req, res) => {
+  const user = new User({email: 'Jean@gmail.com', username: 'JeanPorn'});
+  const newUser = await User.register(user, 'porn');
+  res.send(newUser);
+})
+
+
 // --------------------routers---------------------------
+
 app.get('/', (req, res) => {
   res.render('home');
 })
 
-
-app.use('/campgrounds', campgrounds);
-app.use('/campgrounds/:id/reviews', reviews);
-
+app.use('/', usersRoutes);
+app.use('/campgrounds', campgroundRoutes);
+app.use('/campgrounds/:id/reviews', reviewRoutes);
 
 // if we tried to request some url that we dont recognize
 app.all('*', (req, res, next) => {
