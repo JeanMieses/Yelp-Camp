@@ -71,7 +71,6 @@ app.get('/fakeUser', async (req, res) => {
   res.send(newUser);
 })
 
-
 // --------------------routers---------------------------
 
 app.get('/', (req, res) => {

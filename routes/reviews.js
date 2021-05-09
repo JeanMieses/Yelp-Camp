@@ -8,27 +8,12 @@ const AppError = require('../helpers/AppError');
 const {validateReview} = require('../middleware.js');
 const {isLoggedIn} = require('../middleware.js');
 const {isReviewAuthor} = require('../middleware.js');
+const reviews = require('../controllers/reviews');
 
 // review
-router.post('/', validateReview, isLoggedIn, catchAsync(async(req, res) => {
-  const {id} = req.params
-  const campground = await Campground.findById(id);
-  const review = new Review(req.body.review);
-  review.author = req.user._id;
-  campground.reviews.push(review)
-  await review.save();
-  await campground.save();
-  req.flash('success', 'Review Posted');
-  res.redirect(`/campgrounds/${id}`);
-}))
+router.post('/', validateReview, isLoggedIn, catchAsync(reviews.createReview))
 
 // DELETE review/comment
-router.delete('/:reviewId', isLoggedIn, isReviewAuthor, catchAsync( async(req, res) => {
-  const {id, reviewId} = req.params;
-  await Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId}}, {useFindAndModify: false})
-  await Review.findByIdAndDelete(reviewId);
-  req.flash('success', 'successfully deleted review');
-  res.redirect(`/campgrounds/${id}`);
-}))
+router.delete('/:reviewId', isLoggedIn, isReviewAuthor, catchAsync(reviews.deleteReview))
 
 module.exports = router;
