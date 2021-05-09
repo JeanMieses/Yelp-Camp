@@ -25,12 +25,12 @@ const seedDB = async () => {
     const randomPrice = Math.floor(Math.random() * 20) + 10;
     // console.log(i + " - " + cities[randomNum].city);
     const camp = new Campground({
+      author: '6091abd7d9778c24bc711e8c',
       title: `${sample(descriptors)} ${sample(places)}`,
       location: `${cities[randomNum].city}, ${cities[randomNum].state}`,
-      img: `https://images.unsplash.com/photo-1442128788708-15f1811dd622?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218fHx8fHx8fHwxNjE2NjEzNzM2&ixlib=rb-1.2.1&q=80&w=1080&utm_source=unsplash_source&utm_medium=referral&utm_campaign=api-credit`,
+      img: `https://images.unsplash.com/photo-1573146500785-c84e60e35184?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=934&q=80`,
       description: 'Fun Yelpcamp to relax and meet new people',
       price: randomPrice
-
     })
 
     await camp.save()
