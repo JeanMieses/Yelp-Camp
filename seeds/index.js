@@ -28,7 +28,14 @@ const seedDB = async () => {
       author: '6091abd7d9778c24bc711e8c',
       title: `${sample(descriptors)} ${sample(places)}`,
       location: `${cities[randomNum].city}, ${cities[randomNum].state}`,
-      img: `https://images.unsplash.com/photo-1573146500785-c84e60e35184?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=934&q=80`,
+      imgs: [{
+      url: 'https://res.cloudinary.com/jean0275/image/upload/v1620901806/YelpCamp/v0yxxxh6i7z1pd2xikxr.jpg',
+      fileName: 'YelpCamp/v0yxxxh6i7z1pd2xikxr'
+      },
+      {
+      url: 'https://res.cloudinary.com/jean0275/image/upload/v1620901987/YelpCamp/yfbenncpp1hphggll6xq.jpg',
+      fileName: 'YelpCamp/yfbenncpp1hphggll6xq'
+      }],
       description: 'Fun Yelpcamp to relax and meet new people',
       price: randomPrice
     })

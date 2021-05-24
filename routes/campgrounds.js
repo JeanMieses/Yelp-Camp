@@ -8,17 +8,22 @@ const {validateCampground} = require('../middleware.js');
 const {isAuthor} = require('../middleware.js');
 //controllers
 const campgrounds = require('../controllers/campgrounds');
+const multer  = require('multer')
+const {storage} = require('../cloudinary');
+const upload = multer({ storage });
 
 router.route('/')
   // we dont no need to specific the path anymore
-  .get(catchAsync(campgrounds.index))
-  .post(validateCampground, isLoggedIn, catchAsync(campgrounds.createCampground));
+  .get(
+    catchAsync(campgrounds.index))
+  .post(isLoggedIn, upload.array('imgs'), validateCampground, catchAsync(campgrounds.createCampground));
+
 
 router.get('/new', isLoggedIn, campgrounds.renderNewForm);
 
 router.route('/:id')
   .get(catchAsync(campgrounds.showCampground))
-  .put(validateCampground, isAuthor, catchAsync(campgrounds.updateCampground))
+  .put(isAuthor, upload.array('imgs'), validateCampground, catchAsync(campgrounds.updateCampground))
   .delete(isAuthor, catchAsync(campgrounds.deleteCampground))
 
 

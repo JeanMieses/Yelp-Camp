@@ -1,3 +1,13 @@
+//process.env.NODE_ENV is an enviroment variable that is usually is just development or production
+// we are saying, if we are running in development mode, require the dotenv package.
+// this will take the variable we defined in the .env file and add it to process,env
+// WE DONT USE THIS IN DEVELOPMENT MODE
+if(process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
+// console.log(process.env.secret);
+
 const express = require('express');
 const app = express();
 const path = require('path');
