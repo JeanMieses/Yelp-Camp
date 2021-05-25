@@ -56,7 +56,6 @@
     </div>
   </div>
 
-  <div id='map' style='width: 600px; height: 400px;'></div>
 
   <div class="col-6">
   <%if(currentUser) {%>
@@ -90,6 +89,7 @@
     </form>
     <%}%>
 
+    <div id='map'></div>
     <%for(let review of campground.reviews) {%>
       <div class="card mb-3">
         <div class="card-body">
